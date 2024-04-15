@@ -3,12 +3,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <stack>
+#include <string>
 #include <string_view>
 #include <vector>
 #include <unordered_map>
 
 #include "instruction.hpp"
-
+#include "../loader/loader.hpp"
 
 namespace rvm::exec {
     class VirtualMachine {
@@ -16,7 +17,7 @@ namespace rvm::exec {
         std::vector<InstructionUnit> instructions;
         std::stack<VMValue, std::vector<VMValue>> valuestack;
         std::stack<size_t> callstack;
-        std::unordered_map<std::string_view, size_t> functionMap;
+        std::unordered_map<std::string, size_t> functionMap;
         std::stack<std::vector<VMValue>> locals;
 
         //size_t stackFrameBase = 0;
@@ -24,26 +25,25 @@ namespace rvm::exec {
     public:
         VirtualMachine() = default;
         
-        void LoadBytecode(const std::vector<InstructionUnit>& ins);
-        void LoadFunctionMap(const std::unordered_map<std::string_view, size_t>& map);
-        void Run();
+        void LoadBytecode(const std::vector<loading::FunctionUnit>& functions);
+        void Run(const std::string& entry = "main");
 
     private:
         InstructionUnit FetchIns();
         void ExecutionLoop();
         bool ExecuteInstruction(InstructionUnit ins);
         std::string_view ConsumeStringViewFromIns();
-        std::vector<VMValue>& GetFrameLocals();
+        std::vector<VMValue>* GetFrameLocals();
 
         VMValue PopValue();
 
 
         // Instruction handlers
 
-        void hLoad();
-        void hStore();
+        void hLoad(int32_t index);
+        void hStore(int32_t index);
         void hLoadConst();
-        void hStoreConst();
+        void hStoreConst(int32_t index);
 
         void hConvert(DataType t1, DataType t2);
         void hAdd(DataType t);

@@ -39,10 +39,10 @@ OPCODE  INS_NAME        ARG_SEQUENCE
 00      NOP
 01      HALT
 
-02      LOAD            !Index
-03      STORE           !Index
+02      LOAD            [Index]
+03      STORE           [Index]
 04      LOADCONST       !Data
-05      STORECONST      !LocalIndex     !Data
+05      STORECONST      [Index]     !Data
 
 06      CONVERT         {From, To}
 07      ADD             {Type}

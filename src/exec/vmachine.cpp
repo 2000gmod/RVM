@@ -1,20 +1,28 @@
 #include "vmachine.hpp"
 #include "instruction.hpp"
-#include <cstddef>
 #include <cstdint>
 #include <string_view>
+#include <iostream>
 
 using rvm::exec::VirtualMachine;
 
-void VirtualMachine::LoadBytecode(const std::vector<InstructionUnit>& ins) {
-    this->instructions = ins;
+void VirtualMachine::LoadBytecode(const std::vector<loading::FunctionUnit>& functions) {
+    for (auto& func : functions) {
+        auto fIndex = instructions.size();
+        for (auto& ins : func.code) {
+            instructions.emplace_back(ins);
+        }
+        functionMap.insert_or_assign(func.name, fIndex);
+    }
 }
 
-void VirtualMachine::LoadFunctionMap(const std::unordered_map<std::string_view, size_t>& map) {
-    this->functionMap = map;
-}
-
-void VirtualMachine::Run() {
+void VirtualMachine::Run(const std::string& entry) {
+    if (!functionMap.contains(entry)) {
+        std::cerr << "Fatal error: Unable to find entry point function: \"" << entry << "\".\n";
+        std::exit(1);
+    }
+    insIndex = functionMap.at(entry);
+    locals.emplace();
     ExecutionLoop();
 }
 
@@ -40,16 +48,16 @@ bool VirtualMachine::ExecuteInstruction(InstructionUnit ins) {
         case Op::HALT:
             return false;
         case Op::LOAD: 
-            hLoad();
+            hLoad(ins.ins.data);
             break;
         case Op::STORE:
-            hStore();
+            hStore(ins.ins.data);
             break;
         case Op::LOADCONST:
             hLoadConst();
             break;
         case Op::STORECONST:
-            hStoreConst();
+            hStoreConst(ins.ins.data);
             break;
         case Op::CONVERT:
             hConvert(ins.ins.optype[0], ins.ins.optype[1]);
@@ -117,7 +125,6 @@ bool VirtualMachine::ExecuteInstruction(InstructionUnit ins) {
         case Op::JMPIF:
             hJmpIf(ins.ins.data);
             break;
-
         case Op::CREATELOCALS:
             hCreateLocals(ins.ins.data);
             break;
@@ -141,8 +148,8 @@ std::string_view VirtualMachine::ConsumeStringViewFromIns() {
     return out;
 }
 
-std::vector<rvm::exec::VMValue>& VirtualMachine::GetFrameLocals() {
-    return locals.top();
+std::vector<rvm::exec::VMValue>* VirtualMachine::GetFrameLocals() {
+    return &locals.top();
 }
 
 rvm::exec::VMValue VirtualMachine::PopValue() {

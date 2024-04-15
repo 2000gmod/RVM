@@ -77,13 +77,13 @@ namespace rvm::exec {
         char str[sizeof(Word)];
 
         VMValue() : i64(0) { }
-        explicit VMValue(int64_t d) : i64(d) { }
-        explicit VMValue(int32_t d) : i32(d) { }
-        explicit VMValue(int16_t d) : i16(d) { }
-        explicit VMValue(int8_t d) : i8(d) { }
-        explicit VMValue(float d) : f32(d) { }
-        explicit VMValue(double d) : f64(d) { }
-        explicit VMValue(void* d) : ptr(d) { }
+        explicit VMValue(int64_t d) : VMValue() { i64 = d; }
+        explicit VMValue(int32_t d) : VMValue() { i32 = d; }
+        explicit VMValue(int16_t d) : VMValue() { i16 = d; }
+        explicit VMValue(int8_t d) : VMValue() { i8 = d; }
+        explicit VMValue(float d) : VMValue() { f32 = d; }
+        explicit VMValue(double d) : VMValue() { f64 = d; }
+        explicit VMValue(void* d) : VMValue() { ptr = d; }
     };
 
     union alignas(Word) InstructionUnit {

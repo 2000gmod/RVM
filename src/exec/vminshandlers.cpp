@@ -1,18 +1,17 @@
 #include "instruction.hpp"
 #include "vmachine.hpp"
 #include <cstdint>
+#include <iostream>
 
 using rvm::exec::VirtualMachine;
 
-void VirtualMachine::hLoad() {
-    auto index = FetchIns().data.i64;
-    valuestack.push(GetFrameLocals().at(index));
+void VirtualMachine::hLoad(int32_t index) {
+    valuestack.push(GetFrameLocals()->at(index));
 }
 
-void VirtualMachine::hStore() {
-    auto index = FetchIns().data.i64;
+void VirtualMachine::hStore(int32_t index) {
     auto data = PopValue();
-    GetFrameLocals().at(index) = data;
+    GetFrameLocals()->at(index) = data;
 }
 
 void VirtualMachine::hLoadConst() {
@@ -20,10 +19,9 @@ void VirtualMachine::hLoadConst() {
     valuestack.push(data);
 }
 
-void VirtualMachine::hStoreConst() {
-    auto index = FetchIns().data.i64;
+void VirtualMachine::hStoreConst(int32_t index) {
     auto data = FetchIns().data;
-    GetFrameLocals().at(index) = data;
+    GetFrameLocals()->at(index) = data;
 }
 
 void VirtualMachine::hConvert(DataType from, DataType to) {
@@ -584,28 +582,33 @@ void VirtualMachine::hRshift() {
 }
 
 void VirtualMachine::hJmp(int32_t offset) {
-    insIndex += offset;
+    insIndex += offset - 1;
 }
 
 void VirtualMachine::hJmpIf(int32_t offset) {
     auto flag = PopValue();
-    if (flag.i8) insIndex += offset;
+    if (flag.i8) insIndex += offset - 1;
 }
 
 void VirtualMachine::hCreateLocals(int32_t number) {
     auto localframe = GetFrameLocals();
     for (int i = 0; i < number; i++) {
-        localframe.emplace_back();
+        localframe->emplace_back();
     }
 }
 
 void VirtualMachine::hCall(int32_t argnum) {
-    auto name = ConsumeStringViewFromIns();
+    auto name = std::string(ConsumeStringViewFromIns());
+    if (!functionMap.contains(name)) {
+        std::cerr << "Call failed: Failed to find function \"" << name << "\".\n";
+        std::exit(1);
+    }
+
     callstack.push(insIndex);
     locals.emplace();
     auto argframe = GetFrameLocals();
     for (int i = 0; i < argnum; i++) {
-        argframe.emplace_back(PopValue());
+        argframe->push_back(PopValue());
     }
     insIndex = functionMap[name];
 }
