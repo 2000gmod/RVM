@@ -2,7 +2,7 @@
 
 #include "exec/instruction.hpp"
 #include "exec/vmachine.hpp"
-#include "loader/loader.hpp"
+#include "loader/loading.hpp"
 
 using namespace rvm;
 
@@ -36,7 +36,7 @@ int main() {
         "main",
         {
             exec::InstructionHeader {exec::OpCode::LOADCONST},
-            exec::VMValue(30),
+            exec::VMValue(37),
             exec::InstructionHeader {exec::OpCode::CALL, {}, 1},
             exec::VMValue(0x6f626966),
             exec::InstructionHeader {exec::OpCode::HALT},

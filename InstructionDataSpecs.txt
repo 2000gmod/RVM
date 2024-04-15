@@ -16,11 +16,14 @@ INSTRUCTION FORMAT:
     -------------------------------------------------------------
 
 ARG_SEQUENCE:
-    ! :         64 bit data unit (after instruction).
-    $ :         8 bit char sequence aligned to 64 bit units.
 
-    {T...} :    Optional 8 bit embedded type parameter.
-    [Num] :     Optional embeded data (32bit signed integer).
+    Embeded:
+        {T...} :    Optional 8 bit embedded type parameter.
+        [Num] :     Optional embeded data (32bit signed integer).
+    
+    On instruction stream:
+        ! :         64 bit data unit (after instruction).
+        $ :         8 bit char sequence aligned to 64 bit units.
 
 
 EMBEDED TYPE PARAMS:

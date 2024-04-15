@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 #include "instruction.hpp"
-#include "../loader/loader.hpp"
+#include "../loader/loading.hpp"
 
 namespace rvm::exec {
     class VirtualMachine {
@@ -18,7 +18,7 @@ namespace rvm::exec {
         std::stack<VMValue, std::vector<VMValue>> valuestack;
         std::stack<size_t> callstack;
         std::unordered_map<std::string, size_t> functionMap;
-        std::stack<std::vector<VMValue>> locals;
+        std::stack<std::vector<VMValue>, std::vector<std::vector<VMValue>>> locals;
 
         //size_t stackFrameBase = 0;
         size_t insIndex = 0;
