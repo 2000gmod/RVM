@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <memory>
 #include <unordered_map>
 
 #include "instruction.hpp"
@@ -15,15 +16,20 @@ namespace rvm::exec {
     class VirtualMachine {
     private:
         std::vector<InstructionUnit> instructions;
-        std::stack<VMValue, std::vector<VMValue>> valuestack;
-        std::stack<size_t> callstack;
+        std::unique_ptr<VMValue[]> valueStack;
+        std::stack<size_t> returnStack, frameIndexStack;
         std::unordered_map<std::string, size_t> functionMap;
-        std::stack<std::vector<VMValue>, std::vector<std::vector<VMValue>>> locals;
+        std::vector<VMValue> locals;
 
-        //size_t stackFrameBase = 0;
         size_t insIndex = 0;
+        size_t localFrameBaseIndex = 0;
+
+        int64_t stackSize = 8192;
+        int64_t stackIndex = -1;
     public:
-        VirtualMachine() = default;
+        VirtualMachine();
+        VirtualMachine(int64_t stack, int64_t localSize);
+        ~VirtualMachine() = default;
         
         void LoadBytecode(const std::vector<loading::FunctionUnit>& functions);
         void Run(const std::string& entry = "main");
@@ -33,9 +39,10 @@ namespace rvm::exec {
         void ExecutionLoop();
         bool ExecuteInstruction(InstructionUnit ins);
         std::string_view ConsumeStringViewFromIns();
-        std::vector<VMValue>* GetFrameLocals();
 
         VMValue PopValue();
+        void PushValue(VMValue value);
+        VMValue& GetLocalAtIndex(int32_t index);
 
 
         // Instruction handlers
@@ -77,6 +84,6 @@ namespace rvm::exec {
         void hRet();
 
     public:
-        decltype(valuestack) GetValueStackSnapshot();
+        std::vector<VMValue> GetValueStackSnapshot();
     };
 }

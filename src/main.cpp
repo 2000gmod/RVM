@@ -80,6 +80,6 @@ int main() {
     vm.LoadBytecode({factorial, main, fibo});
     vm.Run();
     
-    auto value = vm.GetValueStackSnapshot().top();
+    auto value = vm.GetValueStackSnapshot().front();
     std::cout << value.i64 << "\n";
 }

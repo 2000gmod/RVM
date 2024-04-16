@@ -4,7 +4,10 @@ project(RVM)
 set(CMAKE_CXX_STANDARD 23)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-variable)
-add_compile_options(-fno-strict-aliasing)
+
+
+#add_compile_options(-pg)
+#add_link_options(-pg)
 
 #add_compile_options(-fsanitize=undefined -fsanitize=address)
 #add_link_options(-fsanitize=undefined -fsanitize=address)

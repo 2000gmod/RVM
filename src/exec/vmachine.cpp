@@ -6,6 +6,13 @@
 
 using rvm::exec::VirtualMachine;
 
+VirtualMachine::VirtualMachine() : VirtualMachine(8192, 8192) { }
+
+VirtualMachine::VirtualMachine(int64_t stack, int64_t localSize) : stackSize(stack) {
+    locals.reserve(localSize);
+    valueStack = std::make_unique<VMValue[]>(stackSize);
+}
+
 void VirtualMachine::LoadBytecode(const std::vector<loading::FunctionUnit>& functions) {
     for (auto& func : functions) {
         auto fIndex = instructions.size();
@@ -22,7 +29,6 @@ void VirtualMachine::Run(const std::string& entry) {
         std::exit(1);
     }
     insIndex = functionMap.at(entry);
-    locals.emplace();
     ExecutionLoop();
 }
 
@@ -148,16 +154,26 @@ std::string_view VirtualMachine::ConsumeStringViewFromIns() {
     return out;
 }
 
-std::vector<rvm::exec::VMValue>* VirtualMachine::GetFrameLocals() {
-    return &locals.top();
-}
-
 rvm::exec::VMValue VirtualMachine::PopValue() {
-    auto val = valuestack.top();
-    valuestack.pop();
+    auto val = valueStack[stackIndex--];
     return val;
 }
 
-decltype(VirtualMachine::valuestack) VirtualMachine::GetValueStackSnapshot() {
-    return valuestack;
+void VirtualMachine::PushValue(rvm::exec::VMValue value) { 
+    if (stackIndex >= stackSize - 1) {
+        std::cerr << "Stack overflow error.\n";
+        std::exit(1);
+    }
+    valueStack[++stackIndex] = value;
+}
+
+rvm::exec::VMValue& VirtualMachine::GetLocalAtIndex(int32_t index) {
+    return locals[index + localFrameBaseIndex];
+}
+std::vector<rvm::exec::VMValue> VirtualMachine::GetValueStackSnapshot() {
+    std::vector<VMValue> out;
+    for (unsigned i = 0; i < stackSize; i++) {
+        out.push_back(valueStack[i]);
+    }
+    return out;
 }

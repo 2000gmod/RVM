@@ -6,22 +6,22 @@
 using rvm::exec::VirtualMachine;
 
 void VirtualMachine::hLoad(int32_t index) {
-    valuestack.push(GetFrameLocals()->at(index));
+    PushValue(GetLocalAtIndex(index));
 }
 
 void VirtualMachine::hStore(int32_t index) {
     auto data = PopValue();
-    GetFrameLocals()->at(index) = data;
+    GetLocalAtIndex(index) = data;
 }
 
 void VirtualMachine::hLoadConst() {
     auto data = FetchIns().data;
-    valuestack.push(data);
+    PushValue(data);
 }
 
 void VirtualMachine::hStoreConst(int32_t index) {
     auto data = FetchIns().data;
-    GetFrameLocals()->at(index) = data;
+    GetLocalAtIndex(index) = data;
 }
 
 void VirtualMachine::hConvert(DataType from, DataType to) {
@@ -33,19 +33,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromI8 = [data, this] (DataType to) {
         switch (to) {
             case I16:
-                valuestack.push(VMValue((int16_t) data.i8));
+                PushValue(VMValue((int16_t) data.i8));
                 return;
             case I32:
-                valuestack.push(VMValue((int32_t) data.i8));
+                PushValue(VMValue((int32_t) data.i8));
                 return;
             case I64:
-                valuestack.push(VMValue((int64_t) data.i8));
+                PushValue(VMValue((int64_t) data.i8));
                 return;
             case F32:
-                valuestack.push(VMValue((float) data.i8));
+                PushValue(VMValue((float) data.i8));
                 return;
             case F64:
-                valuestack.push(VMValue((double) data.i8));
+                PushValue(VMValue((double) data.i8));
                 return;
             default:
                 return;
@@ -55,19 +55,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromI16 = [data, this] (DataType to) {
         switch (to) {
             case I8:
-                valuestack.push(VMValue((int8_t) data.i16));
+                PushValue(VMValue((int8_t) data.i16));
                 return;
             case I32:
-                valuestack.push(VMValue((int32_t) data.i16));
+                PushValue(VMValue((int32_t) data.i16));
                 return;
             case I64:
-                valuestack.push(VMValue((int64_t) data.i16));
+                PushValue(VMValue((int64_t) data.i16));
                 return;
             case F32:
-                valuestack.push(VMValue((float) data.i16));
+                PushValue(VMValue((float) data.i16));
                 return;
             case F64:
-                valuestack.push(VMValue((double) data.i16));
+                PushValue(VMValue((double) data.i16));
                 return;
             default:
                 return;
@@ -77,19 +77,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromI32 = [data, this] (DataType to) {
         switch (to) {
             case I8:
-                valuestack.push(VMValue((int8_t) data.i32));
+                PushValue(VMValue((int8_t) data.i32));
                 return;
             case I16:
-                valuestack.push(VMValue((int16_t) data.i32));
+                PushValue(VMValue((int16_t) data.i32));
                 return;
             case I64:
-                valuestack.push(VMValue((int64_t) data.i32));
+                PushValue(VMValue((int64_t) data.i32));
                 return;
             case F32:
-                valuestack.push(VMValue((float) data.i32));
+                PushValue(VMValue((float) data.i32));
                 return;
             case F64:
-                valuestack.push(VMValue((double) data.i32));
+                PushValue(VMValue((double) data.i32));
                 return;
             default:
                 return;
@@ -99,19 +99,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromI64 = [data, this] (DataType to) {
         switch (to) {
             case I8:
-                valuestack.push(VMValue((int8_t) data.i64));
+                PushValue(VMValue((int8_t) data.i64));
                 return;
             case I16:
-                valuestack.push(VMValue((int16_t) data.i64));
+                PushValue(VMValue((int16_t) data.i64));
                 return;
             case I32:
-                valuestack.push(VMValue((int32_t) data.i64));
+                PushValue(VMValue((int32_t) data.i64));
                 return;
             case F32:
-                valuestack.push(VMValue((float) data.i64));
+                PushValue(VMValue((float) data.i64));
                 return;
             case F64:
-                valuestack.push(VMValue((double) data.i64));
+                PushValue(VMValue((double) data.i64));
                 return;
             default:
                 return;
@@ -121,19 +121,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromF32 = [data, this] (DataType to) {
         switch (to) {
             case I8:
-                valuestack.push(VMValue((int8_t) data.f32));
+                PushValue(VMValue((int8_t) data.f32));
                 return;
             case I16:
-                valuestack.push(VMValue((int16_t) data.f32));
+                PushValue(VMValue((int16_t) data.f32));
                 return;
             case I32:
-                valuestack.push(VMValue((int32_t) data.f32));
+                PushValue(VMValue((int32_t) data.f32));
                 return;
             case I64:
-                valuestack.push(VMValue((int64_t) data.f32));
+                PushValue(VMValue((int64_t) data.f32));
                 return;
             case F64:
-                valuestack.push(VMValue((double) data.f32));
+                PushValue(VMValue((double) data.f32));
                 return;
             default:
                 return;
@@ -143,19 +143,19 @@ void VirtualMachine::hConvert(DataType from, DataType to) {
     auto fromF64 = [data, this] (DataType to) {
         switch (to) {
             case I8:
-                valuestack.push(VMValue((int8_t) data.f64));
+                PushValue(VMValue((int8_t) data.f64));
                 return;
             case I16:
-                valuestack.push(VMValue((int16_t) data.f64));
+                PushValue(VMValue((int16_t) data.f64));
                 return;
             case I32:
-                valuestack.push(VMValue((int32_t) data.f64));
+                PushValue(VMValue((int32_t) data.f64));
                 return;
             case I64:
-                valuestack.push(VMValue((int64_t) data.f64));
+                PushValue(VMValue((int64_t) data.f64));
                 return;
             case F32:
-                valuestack.push(VMValue((float) data.f64));
+                PushValue(VMValue((float) data.f64));
                 return;
             default:
                 return;
@@ -215,7 +215,7 @@ void VirtualMachine::hAdd(DataType t) {
             result.i64 = lhs.i64 + rhs.i64;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hSub(DataType t) {
@@ -247,7 +247,7 @@ void VirtualMachine::hSub(DataType t) {
             result.i64 = lhs.i64 - rhs.i64;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hMul(DataType t) {
@@ -279,7 +279,7 @@ void VirtualMachine::hMul(DataType t) {
             result.i64 = lhs.i64 * rhs.i64;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hDiv(DataType t) {
@@ -311,7 +311,7 @@ void VirtualMachine::hDiv(DataType t) {
             result.i64 = lhs.i64 / rhs.i64;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hLand() {
@@ -320,7 +320,7 @@ void VirtualMachine::hLand() {
 
     VMValue result;
     result.i8 = lhs.i8 && rhs.i8;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hLor() {
@@ -329,14 +329,14 @@ void VirtualMachine::hLor() {
 
     VMValue result;
     result.i8 = lhs.i8 || rhs.i8;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hLnot() {
     auto data = PopValue();
     VMValue result;
     result.i8 = !data.i8;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hGt(DataType t) {
@@ -368,7 +368,7 @@ void VirtualMachine::hGt(DataType t) {
             result.i8 = lhs.ptr > rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hGeq(DataType t) {
@@ -400,7 +400,7 @@ void VirtualMachine::hGeq(DataType t) {
             result.i8 = lhs.ptr >= rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hLt(DataType t) {
@@ -432,7 +432,7 @@ void VirtualMachine::hLt(DataType t) {
             result.i8 = lhs.ptr < rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hLeq(DataType t) {
@@ -464,7 +464,7 @@ void VirtualMachine::hLeq(DataType t) {
             result.i8 = lhs.ptr <= rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hEq(DataType t) {
@@ -496,7 +496,7 @@ void VirtualMachine::hEq(DataType t) {
             result.i8 = lhs.ptr == rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hNotEq(DataType t) {
@@ -528,7 +528,7 @@ void VirtualMachine::hNotEq(DataType t) {
             result.i8 = lhs.ptr != rhs.ptr;
             break;
     }
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hBand() {
@@ -537,7 +537,7 @@ void VirtualMachine::hBand() {
 
     VMValue result;
     result.i64 = lhs.i64 & rhs.i64;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hBor() {
@@ -546,7 +546,7 @@ void VirtualMachine::hBor() {
 
     VMValue result;
     result.i64 = lhs.i64 | rhs.i64;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hBxor() {
@@ -555,12 +555,12 @@ void VirtualMachine::hBxor() {
 
     VMValue result;
     result.i64 = lhs.i64 ^ rhs.i64;
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hBnot() {
     auto data = PopValue();
-    valuestack.emplace(int64_t(~data.i64));
+    PushValue(VMValue(~data.i64));
 }
 
 void VirtualMachine::hLshift() {
@@ -569,7 +569,7 @@ void VirtualMachine::hLshift() {
 
     VMValue result;
     result.i64 = lhs.i64 << (rhs.i64 % 64);
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hRshift() {
@@ -578,7 +578,7 @@ void VirtualMachine::hRshift() {
 
     VMValue result;
     result.i64 = lhs.i64 >> (rhs.i64 % 64);
-    valuestack.push(result);
+    PushValue(result);
 }
 
 void VirtualMachine::hJmp(int32_t offset) {
@@ -591,9 +591,8 @@ void VirtualMachine::hJmpIf(int32_t offset) {
 }
 
 void VirtualMachine::hCreateLocals(int32_t number) {
-    auto localframe = GetFrameLocals();
     for (int i = 0; i < number; i++) {
-        localframe->emplace_back();
+        locals.emplace_back();
     }
 }
 
@@ -604,18 +603,24 @@ void VirtualMachine::hCall(int32_t argnum) {
         std::exit(1);
     }
 
-    callstack.push(insIndex);
-    locals.emplace();
-    auto argframe = GetFrameLocals();
+    returnStack.push(insIndex);
+    frameIndexStack.push(localFrameBaseIndex);
+    localFrameBaseIndex = locals.size();
+
     for (int i = 0; i < argnum; i++) {
-        argframe->push_back(PopValue());
+        locals.push_back(PopValue());
     }
     insIndex = functionMap[name];
 }
 
 void VirtualMachine::hRet() {
-    auto retLoc = callstack.top();
-    callstack.pop();
-    locals.pop();
+    auto retLoc = returnStack.top();
+    returnStack.pop();
+    
+    auto previousBase = frameIndexStack.top();
+    frameIndexStack.pop();
+    locals.erase(locals.begin() + previousBase + 1, locals.end());
+    localFrameBaseIndex = previousBase;
+
     insIndex = retLoc;
 }
