@@ -4,20 +4,19 @@
 #include <cstdint>
 #include <stack>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 
 #include "instruction.hpp"
-#include "../loader/loading.hpp"
+#include "../loading/loading.hpp"
 
 namespace rvm::exec {
     class VirtualMachine {
     private:
         std::vector<InstructionUnit> instructions;
         std::unique_ptr<VMValue[]> valueStack;
-        std::stack<size_t> returnStack, frameIndexStack;
+        std::stack<size_t, std::vector<size_t>> returnStack, frameIndexStack;
         std::unordered_map<std::string, size_t> functionMap;
         std::vector<VMValue> locals;
 
@@ -26,6 +25,8 @@ namespace rvm::exec {
 
         int64_t stackSize = 8192;
         int64_t stackIndex = -1;
+
+        bool running = true;
     public:
         VirtualMachine();
         VirtualMachine(int64_t stack, int64_t localSize);
@@ -35,10 +36,10 @@ namespace rvm::exec {
         void Run(const std::string& entry = "main");
 
     private:
-        InstructionUnit FetchIns();
+        const InstructionUnit& FetchIns();
         void ExecutionLoop();
-        bool ExecuteInstruction(InstructionUnit ins);
-        std::string_view ConsumeStringViewFromIns();
+        bool ExecuteInstruction(const InstructionUnit& ins);
+        const char* ConsumeStringViewFromIns();
 
         VMValue PopValue();
         void PushValue(VMValue value);

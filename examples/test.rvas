@@ -1,0 +1,48 @@
+function fibo {
+    load [0]
+    loadconst !i64 0
+    eq @i64
+    load [0]
+    loadconst !i64 1
+    eq @i64
+    lor
+    jmpif label L1
+    load [0]
+    loadconst !i64 1
+    sub @i64
+    call [1] $"fibo"
+    load [0]
+    loadconst !i64 2
+    sub @i64
+    call [1] $"fibo"
+    add @i64
+    ret
+label L1
+    loadconst !i64 1
+    ret
+}
+
+function factorial {
+    load [0]
+    loadconst !i64 0
+    eq @i64
+    jmpif label L1
+    load [0]
+    load [0]
+    loadconst !i64 1
+    sub @i64
+    call [1] $"factorial" 
+    mul @i64
+    ret
+label L1
+    loadconst !i64 1
+    ret
+}
+
+function main {
+    loadconst !i64 30
+    call [1] $"fibo"
+    ret
+}
+
+    

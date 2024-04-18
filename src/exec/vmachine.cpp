@@ -29,24 +29,28 @@ void VirtualMachine::Run(const std::string& entry) {
         std::exit(1);
     }
     insIndex = functionMap.at(entry);
-    ExecutionLoop();
+    try {
+        ExecutionLoop();
+    }
+    catch (std::exception& e) {
+        std::cerr << "Fatal error: Exception reported: " << e.what() << ".\n";
+        std::exit(1);
+    }
 }
 
-rvm::exec::InstructionUnit VirtualMachine::FetchIns() {
-    auto out = instructions[insIndex];
-    insIndex++;
-    return out;
+const rvm::exec::InstructionUnit& VirtualMachine::FetchIns() {
+    return instructions[insIndex++];
 }
 
 void VirtualMachine::ExecutionLoop() {
-    while (insIndex < instructions.size()) {
+    while (insIndex < instructions.size() && running) {
         auto ins = FetchIns();
         if (!ExecuteInstruction(ins)) break;
     }
 
 }
 
-bool VirtualMachine::ExecuteInstruction(InstructionUnit ins) {
+bool VirtualMachine::ExecuteInstruction(const InstructionUnit& ins) {
     using Op = OpCode;
     switch (ins.ins.code) {
         case Op::NOP:
@@ -144,14 +148,14 @@ bool VirtualMachine::ExecuteInstruction(InstructionUnit ins) {
     return true;
 }
 
-std::string_view VirtualMachine::ConsumeStringViewFromIns() {
+const char* VirtualMachine::ConsumeStringViewFromIns() {
     auto* insPtr = (char*) &instructions[insIndex];
     std::string_view out {insPtr};
 
     uint64_t len = out.length();
     insIndex += (len / 8) + 1;
 
-    return out;
+    return out.data();
 }
 
 rvm::exec::VMValue VirtualMachine::PopValue() {
@@ -170,6 +174,7 @@ void VirtualMachine::PushValue(rvm::exec::VMValue value) {
 rvm::exec::VMValue& VirtualMachine::GetLocalAtIndex(int32_t index) {
     return locals[index + localFrameBaseIndex];
 }
+
 std::vector<rvm::exec::VMValue> VirtualMachine::GetValueStackSnapshot() {
     std::vector<VMValue> out;
     for (unsigned i = 0; i < stackSize; i++) {

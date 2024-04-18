@@ -17,6 +17,11 @@ set(sources
     src/exec/instruction.cpp
     src/exec/vmachine.cpp
     src/exec/vminshandlers.cpp
+
+    src/log/log.cpp
+
+    src/assembler/scanner.cpp
+    src/assembler/parser.cpp
 )
 
 add_executable(rvm ${sources})

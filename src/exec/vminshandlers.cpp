@@ -1,7 +1,6 @@
 #include "instruction.hpp"
 #include "vmachine.hpp"
 #include <cstdint>
-#include <iostream>
 
 using rvm::exec::VirtualMachine;
 
@@ -598,10 +597,6 @@ void VirtualMachine::hCreateLocals(int32_t number) {
 
 void VirtualMachine::hCall(int32_t argnum) {
     auto name = std::string(ConsumeStringViewFromIns());
-    if (!functionMap.contains(name)) {
-        std::cerr << "Call failed: Failed to find function \"" << name << "\".\n";
-        std::exit(1);
-    }
 
     returnStack.push(insIndex);
     frameIndexStack.push(localFrameBaseIndex);
@@ -610,10 +605,14 @@ void VirtualMachine::hCall(int32_t argnum) {
     for (int i = 0; i < argnum; i++) {
         locals.push_back(PopValue());
     }
-    insIndex = functionMap[name];
+    insIndex = functionMap.at(name);
 }
 
 void VirtualMachine::hRet() {
+    if (returnStack.empty()) {
+        running = false;
+        return;
+    }
     auto retLoc = returnStack.top();
     returnStack.pop();
     
