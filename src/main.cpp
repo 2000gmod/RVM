@@ -1,19 +1,15 @@
-#include <fstream>
-#include <sstream>
+#include "assembler/parser.hpp"
+#include "exec/vmachine.hpp"
+#include "log/log.hpp"
 
-#include "assembler/scanner.hpp"
 
 using namespace rvm;
 
-int main() {
-    std::ifstream in("/home/yo/VisualStudioCode/C++/RVMv1/examples/test.rvas");
-    if (!in.is_open()) {
-        return 1;
-    }
-    std::stringstream buf;
-    buf << in.rdbuf();
-    assembler::Scanner scanner(buf.str());
-    auto out = scanner.Tokenize();
-
+int main(int argc, char** argv) {
+    if (argc == 1) log::LogError("Expected input file.");
+    auto code = assembler::Parser::FromFile(argv[1]);
     
+    exec::VirtualMachine vm;
+    vm.LoadBytecode(code);
+    vm.Run();
 }

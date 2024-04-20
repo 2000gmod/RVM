@@ -6,7 +6,7 @@ function fibo {
     loadconst !i64 1
     eq @i64
     lor
-    jmpif label L1
+    jmpif L1
     load [0]
     loadconst !i64 1
     sub @i64
@@ -26,7 +26,7 @@ function factorial {
     load [0]
     loadconst !i64 0
     eq @i64
-    jmpif label L1
+    jmpif L1
     load [0]
     load [0]
     loadconst !i64 1
@@ -42,7 +42,9 @@ label L1
 function main {
     loadconst !i64 30
     call [1] $"fibo"
-    ret
+    
+    call [1] $"__printi64"
+    call [0] $"__printnl"
 }
 
     

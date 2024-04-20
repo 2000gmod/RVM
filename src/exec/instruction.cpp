@@ -1,8 +1,12 @@
 #include "instruction.hpp"
+#include <string>
 
 using namespace rvm::exec;
 
-std::vector<InstructionUnit> InstructionUnit::CreateInstructionDataStream(const std::string_view& str) {
+std::vector<InstructionUnit> InstructionUnit::CreateInstructionDataStream(const std::string_view& view) {
+    std::string str(view);
+    str += '\0';
+
     std::vector<InstructionUnit> out;
     out.reserve((str.size() / 8) + 1);
     int relpos = 0;

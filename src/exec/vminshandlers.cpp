@@ -598,6 +598,11 @@ void VirtualMachine::hCreateLocals(int32_t number) {
 void VirtualMachine::hCall(int32_t argnum) {
     auto name = std::string(ConsumeStringViewFromIns());
 
+    if (builtInFunctions.contains(name)) {
+        builtInFunctions.at(name)(argnum);
+        return;
+    }
+
     returnStack.push(insIndex);
     frameIndexStack.push(localFrameBaseIndex);
     localFrameBaseIndex = locals.size();

@@ -1,5 +1,13 @@
 #include "parser.hpp"
 #include "scanner.hpp"
+#include "token.hpp"
+#include "../log/log.hpp"
+#include <cstddef>
+#include <fstream>
+#include <sstream>
+#include <unordered_map>
+
+using namespace std::literals;
 
 using namespace rvm::assembler;
 using namespace rvm::loading;
@@ -10,9 +18,188 @@ Parser::Parser(const std::string& src) {
 }
 
 std::vector<FunctionUnit> Parser::Parse() {
-    std::vector<FunctionUnit> out;
+    while (!IsAtEnd()) {
+        if (Match(TokenType::FUNCTION)) ParseFunction();
+        else log::LogError("Unexpected token.");
+    }
 
-    
+    return functions;
+}
 
+Token& Parser::Consume(TokenType type, const std::string& msg) {
+    auto& out = Advance();
+    if (out.type != type) log::LogError(msg);
     return out;
+}
+
+bool Parser::IsAtEnd() {
+    return current == (int) tokens.size();
+}
+
+Token& Parser::Peek() {
+    return tokens[current];
+}
+
+Token& Parser::Advance() {
+    return tokens[current++];
+}
+
+Token& Parser::Previous() {
+    return tokens[current - 1];
+}
+
+bool Parser::Match(TokenType type) {
+    if (Check(type)) {
+        Advance();
+        return true;
+    }
+    return false;
+}
+
+bool Parser::Check(TokenType type) {
+    if (IsAtEnd()) return false;
+    return Peek().type == type;
+}
+
+void Parser::ParseFunction() {
+    auto funcname = Consume(TokenType::NAME, "Expected function name.").data.nameString;
+    Consume(TokenType::LEFT_BRACE, "Expected function block.");
+
+    loading::FunctionUnit unit;
+    unit.name = funcname;
+
+    size_t streamOffset = 0;
+    std::unordered_map<std::string, size_t> labelOffsets;
+    std::unordered_map<size_t, std::string> jmpStreamLocations;
+
+
+    while (true) {
+        if (Match(TokenType::INSTRUCTION)) {
+            auto& instruction = Previous();
+            exec::InstructionHeader toInsert {
+                instruction.data.instruction
+            };
+
+            using enum exec::OpCode;
+            switch (toInsert.code) {
+                default:
+                    unit.code.push_back(toInsert);
+                    streamOffset++;
+                    break;
+                
+                case LOAD:
+                case STORE:
+                case CREATELOCALS: {
+                    auto embedData = Consume(TokenType::EMBED_DATA, "Expected embeded data specifier.");
+                    toInsert.data = embedData.data.embedData;
+                    unit.code.push_back(toInsert);
+                    streamOffset++;
+                    break;
+                }
+                
+                case LOADCONST: {
+                    unit.code.push_back(toInsert);
+                    auto data = Consume(TokenType::DATA_LITERAL, "Expected data literal.");
+                    unit.code.push_back(exec::VMValue(data.data.dataLiteral));
+                    streamOffset += 2;
+                    break;
+                }
+
+                case STORECONST: {
+                    auto embedData = Consume(TokenType::EMBED_DATA, "Expected embeded data specifier.");
+                    toInsert.data = embedData.data.embedData;
+                    unit.code.push_back(toInsert);
+
+                    auto streamData = Consume(TokenType::DATA_LITERAL, "Expected data literal.");
+                    unit.code.push_back(exec::VMValue(streamData.data.dataLiteral));
+                    streamOffset += 2;
+                    break;
+                }
+
+                case ADD:
+                case SUB:
+                case MUL:
+                case DIV:
+                case GT:
+                case GEQ:
+                case LT:
+                case LEQ:
+                case EQ:
+                case NOTEQ: {
+                    auto typespec = Consume(TokenType::EMBED_TYPE, "Expected embeded type argument.");
+                    toInsert.optype[0] = typespec.data.embedType;
+                    unit.code.push_back(toInsert);
+                    streamOffset++;
+                    break;
+                }
+                case CONVERT: {
+                    auto from = Consume(TokenType::EMBED_TYPE, "Expected embeded type argument.");
+                    auto to = Consume(TokenType::EMBED_TYPE, "Expected embeded type argument.");
+
+                    toInsert.optype[0] = from.data.embedType;
+                    toInsert.optype[1] = from.data.embedType;
+
+                    unit.code.push_back(toInsert);
+                    streamOffset++;
+                    break;
+                }
+
+                case CALL: {
+                    auto argnum = Consume(TokenType::EMBED_DATA, "Expected embeded data specifier.");
+                    toInsert.data = argnum.data.embedData;
+                    
+                    auto callname = Consume(TokenType::STRING_LITERAL, "Expected function name in call instruction.");
+                    auto name = exec::InstructionUnit::CreateInstructionDataStream(callname.data.stringLiteral);
+                    unit.code.push_back(toInsert);
+                    for (auto& c : name) {
+                        unit.code.emplace_back(c);
+                    }
+                    streamOffset += 1 + name.size();
+                    break;
+                }
+
+                case JMP:
+                case JMPIF: {
+                    auto name = Consume(TokenType::NAME, "Expected label name.");
+                    unit.code.push_back(toInsert);
+                    jmpStreamLocations.insert_or_assign(streamOffset, name.data.nameString);
+                    streamOffset++;
+                }
+            }
+
+        }
+        else if (Match(TokenType::LABEL)) {
+            auto labelName = Consume(TokenType::NAME, "Expected label name.");
+            if (labelOffsets.contains(labelName.data.nameString)) {
+                log::LogError("Label already exists.");
+            }
+            labelOffsets.insert_or_assign(labelName.data.nameString, streamOffset);
+        }
+        else if (Match(TokenType::RIGHT_BRACE)) break;
+    }
+    //Consume(TokenType::RIGHT_BRACE, "Expected closing brace after function body.");
+
+    for (auto& [offset, toLabel] : jmpStreamLocations) {
+        if (!labelOffsets.contains(toLabel)) log::LogError("Unkown label: \"" + toLabel + "\".");
+
+        auto& jmpInstruction = unit.code.at(offset);
+        size_t labelLocation = labelOffsets.at(toLabel);
+
+        jmpInstruction.ins.data = labelLocation - offset;
+    }
+
+    functions.push_back(unit);
+}
+
+std::vector<FunctionUnit> Parser::FromFile(const std::string& path) {
+    std::ifstream input(path.data());
+    if (!input.is_open()) {
+        log::LogError("Error opening file: " + path + ".");
+    }
+
+    std::stringstream buf;
+    buf << input.rdbuf();
+
+    Parser parser(buf.str());
+    return parser.Parse();
 }

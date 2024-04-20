@@ -11,6 +11,7 @@ VirtualMachine::VirtualMachine() : VirtualMachine(8192, 8192) { }
 VirtualMachine::VirtualMachine(int64_t stack, int64_t localSize) : stackSize(stack) {
     locals.reserve(localSize);
     valueStack = std::make_unique<VMValue[]>(stackSize);
+    SetupBuiltInFuncs();
 }
 
 void VirtualMachine::LoadBytecode(const std::vector<loading::FunctionUnit>& functions) {
@@ -181,4 +182,51 @@ std::vector<rvm::exec::VMValue> VirtualMachine::GetValueStackSnapshot() {
         out.push_back(valueStack[i]);
     }
     return out;
+}
+
+void VirtualMachine::SetupBuiltInFuncs() {
+
+    builtInFunctions.insert_or_assign("__printchar", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.i8;
+    });
+
+    builtInFunctions.insert_or_assign("__printi8", [this] (int) {
+        auto val = PopValue();
+        std::cout << int(val.i8);
+    });
+
+    builtInFunctions.insert_or_assign("__printi16", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.i16;
+    });
+
+    builtInFunctions.insert_or_assign("__printi32", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.i32;
+    });
+
+    builtInFunctions.insert_or_assign("__printi64", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.i64;
+    });
+
+    builtInFunctions.insert_or_assign("__printf32", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.f32;
+    });
+
+    builtInFunctions.insert_or_assign("__printf64", [this] (int) {
+        auto val = PopValue();
+        std::cout << val.i64;
+    });
+
+    builtInFunctions.insert_or_assign("__printstr", [this] (int) {
+        auto val = PopValue();
+        std::cout << (char*) val.ptr;
+    });
+
+    builtInFunctions.insert_or_assign("__printnl", [] (int) {
+        std::cout << "\n";
+    });
 }

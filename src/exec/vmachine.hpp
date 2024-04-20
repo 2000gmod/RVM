@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <functional>
 
 #include "instruction.hpp"
 #include "../loading/loading.hpp"
@@ -18,6 +19,8 @@ namespace rvm::exec {
         std::unique_ptr<VMValue[]> valueStack;
         std::stack<size_t, std::vector<size_t>> returnStack, frameIndexStack;
         std::unordered_map<std::string, size_t> functionMap;
+        std::unordered_map<std::string, std::function<void(int)>> builtInFunctions;
+
         std::vector<VMValue> locals;
 
         size_t insIndex = 0;
@@ -44,6 +47,8 @@ namespace rvm::exec {
         VMValue PopValue();
         void PushValue(VMValue value);
         VMValue& GetLocalAtIndex(int32_t index);
+
+        void SetupBuiltInFuncs();
 
 
         // Instruction handlers
