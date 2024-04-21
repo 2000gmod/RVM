@@ -19,6 +19,7 @@ Scanner::Scanner(const std::string& src) : src(src) {
         {"nop", NOP},
         {"halt", HALT},
         {"load", LOAD},
+        {"store", STORE},
         {"loadconst", LOADCONST},
         {"storeconst", STORECONST},
         {"convert", CONVERT},

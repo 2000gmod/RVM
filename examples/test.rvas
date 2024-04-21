@@ -1,3 +1,20 @@
+function factorial {
+    load [0]
+    loadconst !i64 0
+    eq @i64
+    jmpif L1
+    load [0]
+    load [0]
+    loadconst !i64 1
+    sub @i64
+    call [1] $"factorial" 
+    mul @i64
+    ret
+label L1
+    loadconst !i64 1
+    ret
+}
+
 function fibo {
     load [0]
     loadconst !i64 0
@@ -22,29 +39,24 @@ label L1
     ret
 }
 
-function factorial {
-    load [0]
-    loadconst !i64 0
-    eq @i64
-    jmpif L1
-    load [0]
-    load [0]
-    loadconst !i64 1
-    sub @i64
-    call [1] $"factorial" 
-    mul @i64
-    ret
-label L1
-    loadconst !i64 1
-    ret
-}
-
 function main {
-    loadconst !i64 30
+    createlocals [1]
+    storeconst [0] !i64 0
+
+label LOOP
+    load [0]
     call [1] $"fibo"
-    
     call [1] $"__printi64"
     call [0] $"__printnl"
+    load [0]
+    loadconst !i64 1
+    add @i64
+    store [0]
+    load [0]
+    loadconst !i64 20
+    leq @i64
+    jmpif LOOP
+    ret
 }
 
     

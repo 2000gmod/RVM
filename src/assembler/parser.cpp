@@ -176,6 +176,9 @@ void Parser::ParseFunction() {
             labelOffsets.insert_or_assign(labelName.data.nameString, streamOffset);
         }
         else if (Match(TokenType::RIGHT_BRACE)) break;
+        else {
+            log::LogError("Unexpected token.");
+        }
     }
     //Consume(TokenType::RIGHT_BRACE, "Expected closing brace after function body.");
 
