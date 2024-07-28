@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <stack>
 #include <string>
 #include <vector>
@@ -13,18 +14,29 @@
 #include "../loading/loading.hpp"
 
 namespace rvm::exec {
+    class VirtualMachineException : public std::exception {
+    public:
+        VirtualMachineException(const std::string& msg) : msg(msg) { }
+        const char* what() const noexcept override {
+            return msg.c_str();
+        }
+    private:
+        std::string msg;
+    };
+
     class VirtualMachine {
     private:
         std::vector<InstructionUnit> instructions;
         std::unique_ptr<VMValue[]> valueStack;
-        std::stack<size_t, std::vector<size_t>> returnStack, frameIndexStack;
-        std::unordered_map<std::string, size_t> functionMap;
+        std::stack<size_t, std::vector<size_t>> returnStack, frameIndexStack, valueIndexStack;
+        std::unordered_map<std::string, InstructionUnit*> globalDataMap;
         std::unordered_map<std::string, std::function<void(int)>> builtInFunctions;
 
         std::vector<VMValue> locals;
 
         size_t insIndex = 0;
         size_t localFrameBaseIndex = 0;
+        size_t valuesFrameBaseIndex = 0;
 
         int64_t stackSize = 8192;
         int64_t stackIndex = -1;
@@ -35,7 +47,7 @@ namespace rvm::exec {
         VirtualMachine(int64_t stack, int64_t localSize);
         ~VirtualMachine() = default;
         
-        void LoadBytecode(const std::vector<loading::FunctionUnit>& functions);
+        void LoadBytecode(const std::vector<loading::GlobalDataUnit>& functions);
         void Run(const std::string& entry = "main");
 
     private:
@@ -87,7 +99,9 @@ namespace rvm::exec {
 
         void hCreateLocals(int32_t number);
         void hCall(int32_t argnumber);
-        void hRet();
+        void hRet(int32_t nums);
+        void hCallIndirect(int32_t argnumber);
+        void hGetGlobal();
 
     public:
         std::vector<VMValue> GetValueStackSnapshot();

@@ -46,6 +46,9 @@ namespace rvm::exec {
         CREATELOCALS,
         CALL,
         RET,
+
+        CALLINDIRECT,
+        GETGLOBAL
     };
 
     enum class DataType : uint8_t {

@@ -610,10 +610,14 @@ void VirtualMachine::hCall(int32_t argnum) {
     for (int i = 0; i < argnum; i++) {
         locals.push_back(PopValue());
     }
-    insIndex = functionMap.at(name);
+
+    valueIndexStack.push(stackIndex);
+    valuesFrameBaseIndex = stackIndex;
+
+    insIndex = globalDataMap.at(name) - &instructions[0];
 }
 
-void VirtualMachine::hRet() {
+void VirtualMachine::hRet(int32_t num) {
     if (returnStack.empty()) {
         running = false;
         return;
@@ -626,5 +630,41 @@ void VirtualMachine::hRet() {
     locals.erase(locals.begin() + previousBase + 1, locals.end());
     localFrameBaseIndex = previousBase;
 
+    std::vector<VMValue> retvals;
+    retvals.reserve(num);
+
+    for (int i = 0; i < num; i++) {
+        retvals.push_back(PopValue());
+    }
+
+    auto previousValueBase = valueIndexStack.top();
+    valueIndexStack.pop();
+    valuesFrameBaseIndex = previousBase;
+
+    for (int i = num - 1; i >= 0; i--) {
+        PushValue(retvals[i]);
+    }
+
     insIndex = retLoc;
+}
+
+void VirtualMachine::hCallIndirect(int32_t argnum) {
+    returnStack.push(insIndex);
+    frameIndexStack.push(localFrameBaseIndex);
+    localFrameBaseIndex = locals.size();
+
+    for (int i = 0; i < argnum; i++) {
+        locals.push_back(PopValue());
+    }
+
+    valueIndexStack.push(stackIndex);
+    valuesFrameBaseIndex = stackIndex;
+
+    insIndex = (InstructionUnit*) PopValue().ptr - &instructions[0];
+}
+
+void VirtualMachine::hGetGlobal() {
+    auto name = std::string(ConsumeStringViewFromIns());
+    auto val = globalDataMap.at(name);
+    PushValue(VMValue((void*) val));
 }

@@ -76,4 +76,7 @@ OF      GEQ             {Type}
 
 1C      CREATELOCALS    [Number]
 1D      CALL            [Arg Num]       $FunctionName
-1E      RET
+1E      RET             [Num]
+1F      CALLINDIRECT    [Arg Num]
+
+20      GETGLOBAL       $GlobalName

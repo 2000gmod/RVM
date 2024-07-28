@@ -11,6 +11,7 @@ using namespace std::literals;
 Scanner::Scanner(const std::string& src) : src(src) {
     keywords = {
         {"function", TokenType::FUNCTION},
+        {"global", TokenType::GLOBAL},
         {"label", TokenType::LABEL}
     };
 
@@ -46,7 +47,9 @@ Scanner::Scanner(const std::string& src) : src(src) {
         {"jmpif", JMPIF},
         {"createlocals", CREATELOCALS},
         {"call", CALL},
-        {"ret", RET}
+        {"ret", RET},
+        {"callindirect", CALLINDIRECT},
+        {"getglobal", GETGLOBAL}
     };
 
     using enum exec::DataType;
@@ -97,7 +100,7 @@ void Scanner::ScanToken() {
             break;
         default:
             if (IsAlpha(c)) ScanName();
-            else throw c;
+            else log::LogError("Invalid character: \'"s + c + "\'.");
     }
 }
 
@@ -233,7 +236,29 @@ void Scanner::HandleStringLiteral() {
     std::string str;
 
     if (Advance() != '"') rvm::log::LogError("Expected string literal.");
-    while (Peek() != '"') str += Advance();
+    while (Peek() != '"') {
+        char c = Advance();
+        if (c == '\\') {
+            switch (Advance()) {
+                case '\\': 
+                    str += '\\';
+                    break;
+                case '0':
+                    str += '\0';
+                    break;
+                case 'n':
+                    str += '\n';
+                    break;
+                case 't':
+                    str += '\t';
+                    break;
+                case 'r':
+                    str += '\r';
+                    break;
+            }
+        }
+        else str += c;
+    }
     Advance();
 
     AddToken(Token {

@@ -10,12 +10,12 @@ namespace rvm::assembler {
         std::vector<Token> tokens;
         int current = 0;
 
-        std::vector<loading::FunctionUnit> functions;
+        std::vector<loading::GlobalDataUnit> globals;
     public:
         Parser(const std::string& src);
-        std::vector<loading::FunctionUnit> Parse();
+        std::vector<loading::GlobalDataUnit> Parse();
 
-        static std::vector<loading::FunctionUnit> FromFile(const std::string& path);
+        static std::vector<loading::GlobalDataUnit> FromFile(const std::string& path);
     private:
         Token& Consume(TokenType type, const std::string& msg);
         bool IsAtEnd();
@@ -28,6 +28,7 @@ namespace rvm::assembler {
         bool Check(TokenType type);
 
         void ParseFunction();
+        void ParseGlobal();
 
     };
 }

@@ -1,18 +1,22 @@
+global STR1 {
+    $"Hello, world!\n"
+}
+
 function factorial {
     load [0]
     loadconst !i64 0
     eq @i64
-    jmpif L1
+    jmpif BASE
     load [0]
     load [0]
     loadconst !i64 1
     sub @i64
-    call [1] $"factorial" 
+    call [1] $"factorial"
     mul @i64
-    ret
-label L1
+    ret [1]
+label BASE
     loadconst !i64 1
-    ret
+    ret [1]
 }
 
 function fibo {
@@ -33,30 +37,16 @@ function fibo {
     sub @i64
     call [1] $"fibo"
     add @i64
-    ret
+    ret [1]
 label L1
     loadconst !i64 1
-    ret
+    ret [1]
 }
 
 function main {
-    createlocals [1]
-    storeconst [0] !i64 0
-
-label LOOP
-    load [0]
+    loadconst !i64 4
     call [1] $"fibo"
     call [1] $"__printi64"
     call [0] $"__printnl"
-    load [0]
-    loadconst !i64 1
-    add @i64
-    store [0]
-    load [0]
-    loadconst !i64 20
-    leq @i64
-    jmpif LOOP
-    ret
+    ret [0]
 }
-
-    

@@ -6,6 +6,7 @@
 namespace rvm::assembler {
     enum class TokenType {
         FUNCTION,
+        GLOBAL,
         LABEL,
         NAME,
         INSTRUCTION,

@@ -3,8 +3,10 @@
 #include <cstdint>
 #include <string_view>
 #include <iostream>
+#include "../log/log.hpp"
 
 using rvm::exec::VirtualMachine;
+using namespace std::literals;
 
 VirtualMachine::VirtualMachine() : VirtualMachine(8192, 8192) { }
 
@@ -14,28 +16,33 @@ VirtualMachine::VirtualMachine(int64_t stack, int64_t localSize) : stackSize(sta
     SetupBuiltInFuncs();
 }
 
-void VirtualMachine::LoadBytecode(const std::vector<loading::FunctionUnit>& functions) {
-    for (auto& func : functions) {
+void VirtualMachine::LoadBytecode(const std::vector<loading::GlobalDataUnit>& datums) {
+    size_t reserveSize = 0;
+    for (auto &d : datums) {
+        reserveSize += d.dataVector.size();
+    }
+    instructions.reserve(reserveSize);
+
+    for (auto& data : datums) {
         auto fIndex = instructions.size();
-        for (auto& ins : func.code) {
+        for (auto& ins : data.dataVector) {
             instructions.emplace_back(ins);
         }
-        functionMap.insert_or_assign(func.name, fIndex);
+        globalDataMap.insert_or_assign(data.name, &instructions[fIndex]);
     }
 }
 
 void VirtualMachine::Run(const std::string& entry) {
-    if (!functionMap.contains(entry)) {
-        std::cerr << "Fatal error: Unable to find entry point function: \"" << entry << "\".\n";
-        std::exit(1);
+    if (!globalDataMap.contains(entry)) {
+        log::LogError("Unable to find entry function: "s + entry + ".");
     }
-    insIndex = functionMap.at(entry);
+    insIndex = globalDataMap.at(entry) - &instructions[0];
+    valueIndexStack.push(valuesFrameBaseIndex);
     try {
         ExecutionLoop();
     }
     catch (std::exception& e) {
-        std::cerr << "Fatal error: Exception reported: " << e.what() << ".\n";
-        std::exit(1);
+        log::LogError("Fatal error reported: "s + e.what());
     }
 }
 
@@ -54,6 +61,9 @@ void VirtualMachine::ExecutionLoop() {
 bool VirtualMachine::ExecuteInstruction(const InstructionUnit& ins) {
     using Op = OpCode;
     switch (ins.ins.code) {
+        default:
+            throw VirtualMachineException("Unknown instruction.");
+            break;
         case Op::NOP:
             break;
         case Op::HALT:
@@ -143,7 +153,13 @@ bool VirtualMachine::ExecuteInstruction(const InstructionUnit& ins) {
             hCall(ins.ins.data);
             break;
         case Op::RET:
-            hRet();
+            hRet(ins.ins.data);
+            break;
+        case Op::CALLINDIRECT:
+            hCallIndirect(ins.ins.data);
+            break;
+        case Op::GETGLOBAL:
+            hGetGlobal();
             break;
     }
     return true;
@@ -160,14 +176,16 @@ const char* VirtualMachine::ConsumeStringViewFromIns() {
 }
 
 rvm::exec::VMValue VirtualMachine::PopValue() {
+    if (stackIndex < (int64_t) valuesFrameBaseIndex) {
+        throw VirtualMachineException("Value stack operation fell outside of function frame.");
+    }
     auto val = valueStack[stackIndex--];
     return val;
 }
 
 void VirtualMachine::PushValue(rvm::exec::VMValue value) { 
     if (stackIndex >= stackSize - 1) {
-        std::cerr << "Stack overflow error.\n";
-        std::exit(1);
+        throw VirtualMachineException("Stack overflow error.");
     }
     valueStack[++stackIndex] = value;
 }

@@ -1,19 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(RVM)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-variable)
 
-
-#add_compile_options(-pg)
-#add_link_options(-pg)
-
-#add_compile_options(-fsanitize=undefined -fsanitize=address)
-#add_link_options(-fsanitize=undefined -fsanitize=address)
+find_package(args REQUIRED CONFIG)
 
 set(sources
-    src/main.cpp
     src/exec/instruction.cpp
     src/exec/vmachine.cpp
     src/exec/vminshandlers.cpp
@@ -22,11 +16,16 @@ set(sources
 
     src/assembler/scanner.cpp
     src/assembler/parser.cpp
+
+    src/loading/loading.cpp
 )
 
-add_executable(rvm ${sources})
+add_library(rvm_internal STATIC ${sources})
+
+
+add_executable(rvm src/main.cpp)
+target_link_libraries(rvm rvm_internal)
 
 set_target_properties(rvm PROPERTIES LINK_FLAGS_RELEASE -s)
 
 install(TARGETS rvm RUNTIME DESTINATION bin)
-include(CPack)

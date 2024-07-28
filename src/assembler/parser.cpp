@@ -17,13 +17,14 @@ Parser::Parser(const std::string& src) {
     tokens = scanner.Tokenize();
 }
 
-std::vector<FunctionUnit> Parser::Parse() {
+std::vector<GlobalDataUnit> Parser::Parse() {
     while (!IsAtEnd()) {
         if (Match(TokenType::FUNCTION)) ParseFunction();
+        else if (Match(TokenType::GLOBAL)) ParseGlobal();
         else log::LogError("Unexpected token.");
     }
 
-    return functions;
+    return globals;
 }
 
 Token& Parser::Consume(TokenType type, const std::string& msg) {
@@ -65,7 +66,7 @@ void Parser::ParseFunction() {
     auto funcname = Consume(TokenType::NAME, "Expected function name.").data.nameString;
     Consume(TokenType::LEFT_BRACE, "Expected function block.");
 
-    loading::FunctionUnit unit;
+    loading::GlobalDataUnit unit;
     unit.name = funcname;
 
     size_t streamOffset = 0;
@@ -83,24 +84,26 @@ void Parser::ParseFunction() {
             using enum exec::OpCode;
             switch (toInsert.code) {
                 default:
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     streamOffset++;
                     break;
                 
                 case LOAD:
                 case STORE:
-                case CREATELOCALS: {
+                case CREATELOCALS:
+                case CALLINDIRECT:
+                case RET: {
                     auto embedData = Consume(TokenType::EMBED_DATA, "Expected embeded data specifier.");
                     toInsert.data = embedData.data.embedData;
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     streamOffset++;
                     break;
                 }
                 
                 case LOADCONST: {
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     auto data = Consume(TokenType::DATA_LITERAL, "Expected data literal.");
-                    unit.code.push_back(exec::VMValue(data.data.dataLiteral));
+                    unit.dataVector.push_back(exec::VMValue(data.data.dataLiteral));
                     streamOffset += 2;
                     break;
                 }
@@ -108,10 +111,10 @@ void Parser::ParseFunction() {
                 case STORECONST: {
                     auto embedData = Consume(TokenType::EMBED_DATA, "Expected embeded data specifier.");
                     toInsert.data = embedData.data.embedData;
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
 
                     auto streamData = Consume(TokenType::DATA_LITERAL, "Expected data literal.");
-                    unit.code.push_back(exec::VMValue(streamData.data.dataLiteral));
+                    unit.dataVector.push_back(exec::VMValue(streamData.data.dataLiteral));
                     streamOffset += 2;
                     break;
                 }
@@ -128,7 +131,7 @@ void Parser::ParseFunction() {
                 case NOTEQ: {
                     auto typespec = Consume(TokenType::EMBED_TYPE, "Expected embeded type argument.");
                     toInsert.optype[0] = typespec.data.embedType;
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     streamOffset++;
                     break;
                 }
@@ -139,7 +142,7 @@ void Parser::ParseFunction() {
                     toInsert.optype[0] = from.data.embedType;
                     toInsert.optype[1] = from.data.embedType;
 
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     streamOffset++;
                     break;
                 }
@@ -150,9 +153,9 @@ void Parser::ParseFunction() {
                     
                     auto callname = Consume(TokenType::STRING_LITERAL, "Expected function name in call instruction.");
                     auto name = exec::InstructionUnit::CreateInstructionDataStream(callname.data.stringLiteral);
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     for (auto& c : name) {
-                        unit.code.emplace_back(c);
+                        unit.dataVector.emplace_back(c);
                     }
                     streamOffset += 1 + name.size();
                     break;
@@ -161,9 +164,21 @@ void Parser::ParseFunction() {
                 case JMP:
                 case JMPIF: {
                     auto name = Consume(TokenType::NAME, "Expected label name.");
-                    unit.code.push_back(toInsert);
+                    unit.dataVector.push_back(toInsert);
                     jmpStreamLocations.insert_or_assign(streamOffset, name.data.nameString);
                     streamOffset++;
+                    break;
+                }
+
+                case GETGLOBAL: {
+                    auto globname = Consume(TokenType::STRING_LITERAL, "Expected global name");
+                    auto name = exec::InstructionUnit::CreateInstructionDataStream(globname.data.stringLiteral);
+                    unit.dataVector.push_back(toInsert);
+                    for (auto& c : name) {
+                        unit.dataVector.emplace_back(c);
+                    }
+                    streamOffset += 1 + name.size();
+                    break;
                 }
             }
 
@@ -185,16 +200,39 @@ void Parser::ParseFunction() {
     for (auto& [offset, toLabel] : jmpStreamLocations) {
         if (!labelOffsets.contains(toLabel)) log::LogError("Unkown label: \"" + toLabel + "\".");
 
-        auto& jmpInstruction = unit.code.at(offset);
+        auto& jmpInstruction = unit.dataVector.at(offset);
         size_t labelLocation = labelOffsets.at(toLabel);
 
         jmpInstruction.ins.data = labelLocation - offset;
     }
 
-    functions.push_back(unit);
+    globals.push_back(unit);
 }
 
-std::vector<FunctionUnit> Parser::FromFile(const std::string& path) {
+void Parser::ParseGlobal() {
+    auto globalName = Consume(TokenType::NAME, "Expected global name.");
+    Consume(TokenType::LEFT_BRACE, "Expected global data block.");
+
+    loading::GlobalDataUnit unit;
+    unit.name = globalName.data.nameString;
+
+    while (true) {
+        if (Match(TokenType::RIGHT_BRACE)) break;
+        else if (Match(TokenType::STRING_LITERAL)) {
+            auto data = exec::InstructionUnit::CreateInstructionDataStream(Previous().data.stringLiteral);
+            for (auto& c : data) unit.dataVector.push_back(c);
+        }
+        else if (Match(TokenType::DATA_LITERAL)) {
+            unit.dataVector.push_back(Previous().data.dataLiteral);
+        }
+        else {
+            log::LogError("Expected literal data inside global data block.");
+        }
+    }
+    globals.push_back(unit);
+}
+
+std::vector<GlobalDataUnit> Parser::FromFile(const std::string& path) {
     std::ifstream input(path.data());
     if (!input.is_open()) {
         log::LogError("Error opening file: " + path + ".");
