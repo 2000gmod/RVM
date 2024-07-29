@@ -639,7 +639,7 @@ void VirtualMachine::hRet(int32_t num) {
 
     auto previousValueBase = valueIndexStack.top();
     valueIndexStack.pop();
-    valuesFrameBaseIndex = previousBase;
+    valuesFrameBaseIndex = previousValueBase;
 
     for (int i = num - 1; i >= 0; i--) {
         PushValue(retvals[i]);

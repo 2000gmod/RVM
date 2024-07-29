@@ -176,7 +176,7 @@ const char* VirtualMachine::ConsumeStringViewFromIns() {
 }
 
 rvm::exec::VMValue VirtualMachine::PopValue() {
-    if (stackIndex < (int64_t) valuesFrameBaseIndex) {
+    if (stackIndex < std::bit_cast<int64_t>(valuesFrameBaseIndex)) {
         throw VirtualMachineException("Value stack operation fell outside of function frame.");
     }
     auto val = valueStack[stackIndex--];

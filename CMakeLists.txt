@@ -22,7 +22,6 @@ set(sources
 
 add_library(rvm_internal STATIC ${sources})
 
-
 add_executable(rvm src/main.cpp)
 target_link_libraries(rvm rvm_internal)
 

@@ -44,7 +44,7 @@ label L1
 }
 
 function main {
-    loadconst !i64 4
+    loadconst !i64 30
     call [1] $"fibo"
     call [1] $"__printi64"
     call [0] $"__printnl"
