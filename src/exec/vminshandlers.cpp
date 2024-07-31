@@ -1,6 +1,8 @@
 #include "instruction.hpp"
 #include "vmachine.hpp"
+#include "../log/log.hpp"
 #include <cstdint>
+#include <array>
 
 using rvm::exec::VirtualMachine;
 
@@ -618,6 +620,9 @@ void VirtualMachine::hCall(int32_t argnum) {
 }
 
 void VirtualMachine::hRet(int32_t num) {
+    if (num > 16) {
+        rvm::log::LogError("Attempted to return more than 16 values.");
+    }
     if (returnStack.empty()) {
         running = false;
         return;
@@ -630,11 +635,10 @@ void VirtualMachine::hRet(int32_t num) {
     locals.erase(locals.begin() + previousBase + 1, locals.end());
     localFrameBaseIndex = previousBase;
 
-    std::vector<VMValue> retvals;
-    retvals.reserve(num);
+    std::array<VMValue, 16> retvals;
 
     for (int i = 0; i < num; i++) {
-        retvals.push_back(PopValue());
+        retvals[i] = PopValue();
     }
 
     auto previousValueBase = valueIndexStack.top();

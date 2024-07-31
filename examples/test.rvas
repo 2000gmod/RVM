@@ -1,5 +1,5 @@
-global STR1 {
-    $"Hello, world!\n"
+global str1 {
+    $"Hello!\n"
 }
 
 function factorial {
@@ -44,8 +44,16 @@ label L1
 }
 
 function main {
-    loadconst !i64 30
+    getglobal $"str1"
+    call [1] $"__printstr"
+
+    loadconst !i64 20
     call [1] $"fibo"
+    call [1] $"__printi64"
+    call [0] $"__printnl"
+
+    loadconst !i64 20
+    call [1] $"factorial"
     call [1] $"__printi64"
     call [0] $"__printnl"
     ret [0]

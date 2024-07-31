@@ -1,6 +1,7 @@
 #include "loading.hpp"
 #include "../exec/instruction.hpp"
 #include <string>
+#include "../log/log.hpp"
 
 using rvm::loading::GlobalDataUnit;
 namespace ldg = rvm::loading;
@@ -30,6 +31,7 @@ std::string ldg::Serialize(const std::vector<GlobalDataUnit>& units) {
 }
 
 std::vector<GlobalDataUnit> ldg::Deserialize(const std::string& code) {
+    rvm::log::LogInfo("Deserializing file.");
     std::vector<GlobalDataUnit> out;
 
     unsigned int index = 0;
@@ -73,6 +75,6 @@ std::vector<GlobalDataUnit> ldg::Deserialize(const std::string& code) {
 
         out.push_back(gdu);
     }
-
+    rvm::log::LogInfo("Finished deserializing.");
     return out;
 }

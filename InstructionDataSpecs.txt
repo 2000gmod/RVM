@@ -9,10 +9,10 @@ INSTRUCTION FORMAT:
     2           Embeded type parameter 1.
     3           Embeded type parameter 2.
     -------------------------------------------------------------
-    4           Embeded 32bit data signed integer.
-    5           .
-    6           .
-    7           .
+    4           Embeded 32bit signed integer data.
+    5           ...
+    6           ...
+    7           ...
     -------------------------------------------------------------
 
 ARG_SEQUENCE:

@@ -18,12 +18,13 @@ Parser::Parser(const std::string& src) {
 }
 
 std::vector<GlobalDataUnit> Parser::Parse() {
+    log::LogInfo("Parsing file.");
     while (!IsAtEnd()) {
         if (Match(TokenType::FUNCTION)) ParseFunction();
         else if (Match(TokenType::GLOBAL)) ParseGlobal();
         else log::LogError("Unexpected token.");
     }
-
+    log::LogInfo("Done parsing.");
     return globals;
 }
 
@@ -233,6 +234,7 @@ void Parser::ParseGlobal() {
 }
 
 std::vector<GlobalDataUnit> Parser::FromFile(const std::string& path) {
+    log::LogInfo("Opening file: " + path + ".");
     std::ifstream input(path.data());
     if (!input.is_open()) {
         log::LogError("Error opening file: " + path + ".");

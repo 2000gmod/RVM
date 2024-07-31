@@ -11,12 +11,15 @@ using namespace std::literals;
 VirtualMachine::VirtualMachine() : VirtualMachine(8192, 8192) { }
 
 VirtualMachine::VirtualMachine(int64_t stack, int64_t localSize) : stackSize(stack) {
+    log::LogInfo("Creating VM instance.");
     locals.reserve(localSize);
     valueStack = std::make_unique<VMValue[]>(stackSize);
     SetupBuiltInFuncs();
+    log::LogInfo("VM created.");
 }
 
 void VirtualMachine::LoadBytecode(const std::vector<loading::GlobalDataUnit>& datums) {
+    log::LogInfo("Loading bytecode.");
     size_t reserveSize = 0;
     for (auto &d : datums) {
         reserveSize += d.dataVector.size();
@@ -30,9 +33,11 @@ void VirtualMachine::LoadBytecode(const std::vector<loading::GlobalDataUnit>& da
         }
         globalDataMap.insert_or_assign(data.name, &instructions[fIndex]);
     }
+    log::LogInfo("Finished loading bytecode.");
 }
 
 void VirtualMachine::Run(const std::string& entry) {
+    log::LogInfo("Running VM.");
     if (!globalDataMap.contains(entry)) {
         log::LogError("Unable to find entry function: "s + entry + ".");
     }
@@ -44,6 +49,7 @@ void VirtualMachine::Run(const std::string& entry) {
     catch (std::exception& e) {
         log::LogError("Fatal error reported: "s + e.what());
     }
+    log::LogInfo("Finished VM program.");
 }
 
 const rvm::exec::InstructionUnit& VirtualMachine::FetchIns() {
@@ -245,6 +251,6 @@ void VirtualMachine::SetupBuiltInFuncs() {
     });
 
     builtInFunctions.insert_or_assign("__printnl", [] (int) {
-        std::cout << "\n";
+        std::cout << std::endl;
     });
 }
