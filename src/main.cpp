@@ -14,7 +14,7 @@ void MainError(const char* msg, int code = 1) {
     std::exit(code);
 }
 
-#define USE_DEBUG_ARGS 0
+#define USE_DEBUG_ARGS 1
 
 int main(int argc, char** argv) {
     args::ArgumentParser parser("");

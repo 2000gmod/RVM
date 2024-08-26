@@ -1,5 +1,8 @@
 global str1 {
-    $"Hello!\n"
+    $"Hello\n"
+    !i64 6148914691236517290
+    !i32 1431655850
+    !i64 6148914691236517290
 }
 
 function factorial {

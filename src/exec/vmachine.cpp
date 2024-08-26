@@ -1,6 +1,7 @@
 #include "vmachine.hpp"
 #include "instruction.hpp"
 #include <cstdint>
+#include <stdexcept>
 #include <string_view>
 #include <iostream>
 #include "../log/log.hpp"
@@ -45,6 +46,9 @@ void VirtualMachine::Run(const std::string& entry) {
     valueIndexStack.push(valuesFrameBaseIndex);
     try {
         ExecutionLoop();
+    }
+    catch (std::out_of_range& e) {
+        log::LogError("Global unit not found.");
     }
     catch (std::exception& e) {
         log::LogError("Fatal error reported: "s + e.what());
