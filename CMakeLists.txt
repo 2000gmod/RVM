@@ -4,6 +4,8 @@ project(RVM)
 set(CMAKE_CXX_STANDARD 20)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-variable)
+add_compile_options(-fwrapv)
+add_compile_options(-fno-strict-aliasing)
 
 find_package(args REQUIRED CONFIG)
 
@@ -13,9 +15,6 @@ set(sources
     src/exec/vminshandlers.cpp
 
     src/log/log.cpp
-
-    src/assembler/scanner.cpp
-    src/assembler/parser.cpp
 
     src/loading/loading.cpp
 )
